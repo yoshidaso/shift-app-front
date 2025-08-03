@@ -8,7 +8,7 @@ import { Textarea } from './components/ui/textarea'
 import { Clock, Save, Calendar } from 'lucide-react'
 import Link from 'next/link'
 
-interface AttendanceRecord {
+type AttendanceRecord = {
   date: string
   clockIn: string | null
   clockOut: string | null
@@ -16,7 +16,7 @@ interface AttendanceRecord {
   concerns: string
 }
 
-export default function AttendancePage() {
+export default function Home() {
   const [currentTime, setCurrentTime] = useState('')
   const [todayRecord, setTodayRecord] = useState<AttendanceRecord>({
     date: '',
@@ -35,7 +35,6 @@ export default function AttendancePage() {
     .replace(/\//g, '-')
 
   useEffect(() => {
-    // 現在時刻を更新
     const updateTime = () => {
       const now = new Date()
       setCurrentTime(
@@ -50,7 +49,6 @@ export default function AttendancePage() {
     updateTime()
     const interval = setInterval(updateTime, 1000)
 
-    // 今日の記録を読み込み
     const savedRecords = localStorage.getItem('attendanceRecords')
     if (savedRecords) {
       const records: AttendanceRecord[] = JSON.parse(savedRecords)
@@ -111,7 +109,6 @@ export default function AttendancePage() {
       ? JSON.parse(savedRecords)
       : []
 
-    // 既存の記録を更新または新規追加
     const existingIndex = records.findIndex((record) => record.date === today)
     if (existingIndex >= 0) {
       records[existingIndex] = todayRecord
@@ -139,7 +136,6 @@ export default function AttendancePage() {
           </Link>
         </div>
 
-        {/* 現在時刻表示 */}
         <Card>
           <CardContent className='pt-6'>
             <div className='text-center'>
@@ -159,7 +155,6 @@ export default function AttendancePage() {
           </CardContent>
         </Card>
 
-        {/* 出退勤ボタン */}
         <Card>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
@@ -210,7 +205,6 @@ export default function AttendancePage() {
           </CardContent>
         </Card>
 
-        {/* 作業内容・課題入力 */}
         <Card>
           <CardHeader>
             <CardTitle>作業記録</CardTitle>
@@ -252,7 +246,6 @@ export default function AttendancePage() {
           </CardContent>
         </Card>
 
-        {/* 保存ボタン */}
         <Button
           onClick={handleSave}
           className='w-full h-12 text-lg flex items-center gap-2'
