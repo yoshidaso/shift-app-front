@@ -29,3 +29,35 @@ export async function GET() {
     )
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+
+    const response = await fetch(`${BACKEND_BASE_URL}/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+    })
+
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: (data as any)?.message ?? 'Failed to create user' },
+        { status: response.status }
+      )
+    }
+
+    return NextResponse.json(data, { status: 201 })
+  } catch (error) {
+    return NextResponse.json(
+      { message: 'Failed to create user', error: (error as Error).message },
+      { status: 500 }
+    )
+  }
+}
