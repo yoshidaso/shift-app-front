@@ -7,8 +7,9 @@ import { Label } from './components/ui/label'
 import { Textarea } from './components/ui/textarea'
 import { Clock, Save, Calendar } from 'lucide-react'
 import Link from 'next/link'
+import { useUsers } from './hooks/useUsers'
 
-type AttendanceRecord = {
+type ShiftRecord = {
   date: string
   clockIn: string | null
   clockOut: string | null
@@ -18,7 +19,7 @@ type AttendanceRecord = {
 
 export default function Home() {
   const [currentTime, setCurrentTime] = useState('')
-  const [todayRecord, setTodayRecord] = useState<AttendanceRecord>({
+  const [todayRecord, setTodayRecord] = useState<ShiftRecord>({
     date: '',
     clockIn: null,
     clockOut: null,
@@ -51,7 +52,7 @@ export default function Home() {
 
     const savedRecords = localStorage.getItem('attendanceRecords')
     if (savedRecords) {
-      const records: AttendanceRecord[] = JSON.parse(savedRecords)
+      const records: ShiftRecord[] = JSON.parse(savedRecords)
       const todayData = records.find((record) => record.date === today)
       if (todayData) {
         setTodayRecord(todayData)
@@ -105,7 +106,7 @@ export default function Home() {
 
   const handleSave = () => {
     const savedRecords = localStorage.getItem('attendanceRecords')
-    const records: AttendanceRecord[] = savedRecords
+    const records: ShiftRecord[] = savedRecords
       ? JSON.parse(savedRecords)
       : []
 
@@ -119,6 +120,9 @@ export default function Home() {
     localStorage.setItem('attendanceRecords', JSON.stringify(records))
     alert('保存しました')
   }
+
+  const { users } = useUsers()
+  console.log(users)
 
   return (
     <div className='min-h-screen bg-gray-50 p-4'>
