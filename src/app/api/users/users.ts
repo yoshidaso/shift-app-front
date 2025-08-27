@@ -1,4 +1,5 @@
 const BASE_URL = '/api/users'
+import { safeReadErrorMessage } from '../../lib/utils'
 
 export type CreateUserRequest = {
   Name: string
@@ -41,16 +42,4 @@ export async function createUser(
   }
 
   return response.json()
-}
-
-async function safeReadErrorMessage(response: Response): Promise<string> {
-  try {
-    const data = await response.json()
-    if (data && typeof data === 'object' && 'message' in data) {
-      return String((data as { message?: unknown }).message ?? 'Request failed')
-    }
-  } catch (_) {
-    // ignore
-  }
-  return `Request failed with status ${response.status}`
 }

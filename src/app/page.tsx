@@ -7,7 +7,7 @@ import { Label } from './components/ui/label'
 import { Textarea } from './components/ui/textarea'
 import { Clock, Save, Calendar } from 'lucide-react'
 import Link from 'next/link'
-import { useUsers } from './hooks/useUsers'
+import { useShifts } from './hooks/useShifts'
 
 type ShiftRecord = {
   date: string
@@ -26,6 +26,8 @@ export default function Home() {
     workContent: '',
     concerns: '',
   })
+
+  const { createShift, isLoading } = useShifts()
 
   const today = new Date()
     .toLocaleDateString('ja-JP', {
@@ -104,25 +106,31 @@ export default function Home() {
       .padStart(2, '0')}分`
   }
 
-  const handleSave = () => {
-    const savedRecords = localStorage.getItem('attendanceRecords')
-    const records: ShiftRecord[] = savedRecords
-      ? JSON.parse(savedRecords)
-      : []
+  const handleSave = async () => {
+    // APIにシフト情報を保存
+    if (todayRecord.clockIn && todayRecord.clockOut) {
+      const startDateTime = todayRecord.clockIn
+      const endDateTime = todayRecord.clockOut
 
-    const existingIndex = records.findIndex((record) => record.date === today)
-    if (existingIndex >= 0) {
-      records[existingIndex] = todayRecord
+      const shiftData = {
+        UserID: 4, // TODO: 実際のユーザーIDに置き換える
+        StartTime: startDateTime,
+        EndTime: endDateTime,
+        WorkContent: todayRecord.workContent,
+        Issues: todayRecord.concerns,
+      }
+
+      const result = await createShift(shiftData)
+
+      if (result.success) {
+        alert('保存しました')
+      } else {
+        alert(`保存に失敗しました: ${result.error?.message || '不明なエラー'}`)
+      }
     } else {
-      records.push(todayRecord)
+      alert('出勤時間と退勤時間の両方が記録されていません。')
     }
-
-    localStorage.setItem('attendanceRecords', JSON.stringify(records))
-    alert('保存しました')
   }
-
-  const { users } = useUsers()
-  console.log(users)
 
   return (
     <div className='min-h-screen bg-gray-50 p-4'>
@@ -253,9 +261,10 @@ export default function Home() {
         <Button
           onClick={handleSave}
           className='w-full h-12 text-lg flex items-center gap-2'
+          disabled={isLoading}
         >
           <Save className='w-5 h-5' />
-          保存
+          {isLoading ? '保存中...' : '保存'}
         </Button>
       </div>
     </div>
