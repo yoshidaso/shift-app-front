@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useUsers } from '../hooks/useUsers'
-import { CreateUserRequest } from '../api/users'
+import { CreateUserRequest } from '../api/users/users'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'

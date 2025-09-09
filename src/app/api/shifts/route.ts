@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { BACKEND_BASE_URL } from '../../lib/utils'
+import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const response = await fetch(`${BACKEND_BASE_URL}/users`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/shifts`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -15,7 +15,7 @@ export async function GET() {
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: (data as any)?.message ?? 'Failed to fetch users' },
+        { message: (data as any)?.message ?? 'Failed to fetch shifts' },
         { status: response.status }
       )
     }
@@ -23,7 +23,7 @@ export async function GET() {
     return NextResponse.json(data, { status: 200 })
   } catch (error) {
     return NextResponse.json(
-      { message: 'Failed to fetch users', error: (error as Error).message },
+      { message: 'Failed to fetch shifts', error: (error as Error).message },
       { status: 500 }
     )
   }
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    const response = await fetch(`${BACKEND_BASE_URL}/users`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/shifts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: (data as any)?.message ?? 'Failed to create user' },
+        { message: (data as any)?.message ?? 'Failed to create shift' },
         { status: response.status }
       )
     }
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
     return NextResponse.json(
-      { message: 'Failed to create user', error: (error as Error).message },
+      { message: 'Failed to create shift', error: (error as Error).message },
       { status: 500 }
     )
   }

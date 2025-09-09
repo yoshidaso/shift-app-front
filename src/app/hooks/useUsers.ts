@@ -1,7 +1,5 @@
-'use client'
-
 import useSWR from 'swr'
-import { fetchUsers, createUser, CreateUserRequest } from '../api/users'
+import { fetchUsers, createUser, CreateUserRequest } from '../api/users/users'
 
 export function useUsers() {
   const { data, error, isLoading, mutate } = useSWR('users', fetchUsers, {
@@ -34,5 +32,3 @@ export function useUsers() {
     createUser: handleCreateUser,
   }
 }
-
-export default useUsers
