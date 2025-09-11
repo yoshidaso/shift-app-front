@@ -5,15 +5,14 @@ import {
   CreateShiftRequest,
 } from '../api/shifts/shifts'
 
-export function useShifts() {
+export function useShifts(userName: string) {
   const { data, error, isLoading, mutate } = useSWR('shifts', fetchShifts, {
     revalidateOnFocus: false,
   })
 
   const handleCreateShift = async (shiftData: CreateShiftRequest) => {
     try {
-      await createShift(shiftData)
-      // シフト作成後にデータを再取得
+      await createShift(shiftData, { params: { userName } })
       mutate()
       return { success: true, error: null }
     } catch (error) {

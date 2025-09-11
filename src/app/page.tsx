@@ -1,271 +1,99 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from './components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { Label } from './components/ui/label'
-import { Textarea } from './components/ui/textarea'
-import { Clock, Save, Calendar } from 'lucide-react'
-import Link from 'next/link'
-import { useShifts } from './hooks/useShifts'
-
-type ShiftRecord = {
-  date: string
-  clockIn: string | null
-  clockOut: string | null
-  workContent: string
-  concerns: string
-}
+import { Clock, Calendar, User } from 'lucide-react'
 
 export default function Home() {
-  const [currentTime, setCurrentTime] = useState('')
-  const [todayRecord, setTodayRecord] = useState<ShiftRecord>({
-    date: '',
-    clockIn: null,
-    clockOut: null,
-    workContent: '',
-    concerns: '',
-  })
+  const [userName, setUserName] = useState('')
 
-  const { createShift, isLoading } = useShifts()
-
-  const today = new Date()
-    .toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    })
-    .replace(/\//g, '-')
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date()
-      setCurrentTime(
-        now.toLocaleTimeString('ja-JP', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        })
-      )
+  const handleUserAccess = () => {
+    if (userName.trim()) {
+      window.location.href = `/${encodeURIComponent(userName.trim())}`
     }
-
-    updateTime()
-    const interval = setInterval(updateTime, 1000)
-
-    const savedRecords = localStorage.getItem('attendanceRecords')
-    if (savedRecords) {
-      const records: ShiftRecord[] = JSON.parse(savedRecords)
-      const todayData = records.find((record) => record.date === today)
-      if (todayData) {
-        setTodayRecord(todayData)
-      } else {
-        setTodayRecord((prev) => ({ ...prev, date: today }))
-      }
-    } else {
-      setTodayRecord((prev) => ({ ...prev, date: today }))
-    }
-
-    return () => clearInterval(interval)
-  }, [today])
-
-  const handleClockIn = () => {
-    const now = new Date()
-    const timeString = now.toLocaleTimeString('ja-JP', {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-    setTodayRecord((prev) => ({ ...prev, clockIn: timeString }))
   }
 
-  const handleClockOut = () => {
-    const now = new Date()
-    const timeString = now.toLocaleTimeString('ja-JP', {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-    setTodayRecord((prev) => ({ ...prev, clockOut: timeString }))
-  }
-
-  const calculateWorkingHours = () => {
-    if (!todayRecord.clockIn || !todayRecord.clockOut) return ''
-
-    const [inHour, inMinute] = todayRecord.clockIn.split(':').map(Number)
-    const [outHour, outMinute] = todayRecord.clockOut.split(':').map(Number)
-
-    const inTime = inHour * 60 + inMinute
-    const outTime = outHour * 60 + outMinute
-
-    if (outTime <= inTime) return ''
-
-    const diffMinutes = outTime - inTime
-    const hours = Math.floor(diffMinutes / 60)
-    const minutes = diffMinutes % 60
-
-    return `${hours.toString().padStart(2, '0')}時間${minutes
-      .toString()
-      .padStart(2, '0')}分`
-  }
-
-  const handleSave = async () => {
-    // APIにシフト情報を保存
-    if (todayRecord.clockIn && todayRecord.clockOut) {
-      const startDateTime = todayRecord.clockIn
-      const endDateTime = todayRecord.clockOut
-
-      const shiftData = {
-        UserID: 4, // TODO: 実際のユーザーIDに置き換える
-        StartTime: startDateTime,
-        EndTime: endDateTime,
-        WorkContent: todayRecord.workContent,
-        Issues: todayRecord.concerns,
-      }
-
-      const result = await createShift(shiftData)
-
-      if (result.success) {
-        alert('保存しました')
-      } else {
-        alert(`保存に失敗しました: ${result.error?.message || '不明なエラー'}`)
-      }
-    } else {
-      alert('出勤時間と退勤時間の両方が記録されていません。')
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleUserAccess()
     }
   }
 
   return (
     <div className='min-h-screen bg-gray-50 p-4'>
       <div className='max-w-2xl mx-auto space-y-6'>
-        <div className='flex justify-between items-center'>
-          <h1 className='text-3xl font-bold text-gray-900'>勤怠管理</h1>
-          <Link href='/monthly'>
-            <Button
-              variant='outline'
-              className='flex items-center gap-2 bg-transparent'
-            >
-              <Calendar className='w-4 h-4' />
-              月次レポート
-            </Button>
-          </Link>
+        <div className='text-center mt-20'>
+          <h1 className='text-4xl font-bold text-gray-900 mb-4'>勤怠管理システム</h1>
+          <p className='text-gray-600 mb-8'>ユーザー名を入力してください</p>
         </div>
 
         <Card>
           <CardContent className='pt-6'>
-            <div className='text-center'>
-              <div className='text-sm text-gray-500 mb-2'>現在時刻</div>
-              <div className='text-4xl font-mono font-bold text-blue-600'>
-                {currentTime}
+            <div className='space-y-4'>
+              <div className='flex items-center gap-2 mb-4'>
+                <User className='w-5 h-5 text-blue-600' />
+                <Label htmlFor='userName' className='text-sm font-medium'>
+                  ユーザー名
+                </Label>
               </div>
-              <div className='text-sm text-gray-500 mt-2'>
-                {new Date().toLocaleDateString('ja-JP', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  weekday: 'long',
-                })}
+              <div className='flex gap-2'>
+                <input
+                  id='userName'
+                  type='text'
+                  placeholder='ユーザー名を入力'
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className='flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                />
+                <Button 
+                  onClick={handleUserAccess}
+                  disabled={!userName.trim()}
+                  className='px-6'
+                >
+                  アクセス
+                </Button>
               </div>
+              <p className='text-xs text-gray-500 mt-2'>
+                例: /john → johnさんの勤怠管理画面
+              </p>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <Clock className='w-5 h-5' />
-              出退勤記録
-            </CardTitle>
+            <CardTitle className='text-lg'>システム概要</CardTitle>
           </CardHeader>
-          <CardContent className='space-y-4'>
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <Button
-                  onClick={handleClockIn}
-                  className='w-full h-16 text-lg bg-green-600 hover:bg-green-700'
-                  disabled={!!todayRecord.clockIn}
-                >
-                  出勤
-                </Button>
-                {todayRecord.clockIn && (
-                  <div className='text-center mt-2 text-sm text-gray-600'>
-                    出勤時間: {todayRecord.clockIn}
-                  </div>
-                )}
-              </div>
-              <div>
-                <Button
-                  onClick={handleClockOut}
-                  className='w-full h-16 text-lg bg-red-600 hover:bg-red-700'
-                  disabled={!todayRecord.clockIn || !!todayRecord.clockOut}
-                >
-                  退勤
-                </Button>
-                {todayRecord.clockOut && (
-                  <div className='text-center mt-2 text-sm text-gray-600'>
-                    退勤時間: {todayRecord.clockOut}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {calculateWorkingHours() && (
-              <div className='text-center p-4 bg-blue-50 rounded-lg'>
-                <div className='text-sm text-gray-600'>本日の稼働時間</div>
-                <div className='text-2xl font-bold text-blue-600'>
-                  {calculateWorkingHours()}
+          <CardContent>
+            <div className='space-y-3 text-sm text-gray-600'>
+              <div className='flex items-start gap-2'>
+                <Clock className='w-4 h-4 mt-0.5' />
+                <div>
+                  <strong>出退勤記録:</strong> 日々の出勤・退勤時間を記録
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>作業記録</CardTitle>
-          </CardHeader>
-          <CardContent className='space-y-4'>
-            <div>
-              <Label htmlFor='workContent'>作業内容</Label>
-              <Textarea
-                id='workContent'
-                placeholder='本日の作業内容を入力してください'
-                value={todayRecord.workContent}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setTodayRecord((prev) => ({
-                    ...prev,
-                    workContent: e.target.value,
-                  }))
-                }
-                className='mt-2'
-                rows={4}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor='concerns'>課題・懸念点</Label>
-              <Textarea
-                id='concerns'
-                placeholder='課題や懸念点があれば入力してください'
-                value={todayRecord.concerns}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setTodayRecord((prev) => ({
-                    ...prev,
-                    concerns: e.target.value,
-                  }))
-                }
-                className='mt-2'
-                rows={3}
-              />
+              <div className='flex items-start gap-2'>
+                <Calendar className='w-4 h-4 mt-0.5' />
+                <div>
+                  <strong>月次レポート:</strong> 月別の勤怠データを確認
+                </div>
+              </div>
+              <div className='flex items-start gap-2'>
+                <User className='w-4 h-4 mt-0.5' />
+                <div>
+                  <strong>ユーザー別管理:</strong> 各ユーザーの勤怠情報を個別管理
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Button
-          onClick={handleSave}
-          className='w-full h-12 text-lg flex items-center gap-2'
-          disabled={isLoading}
-        >
-          <Save className='w-5 h-5' />
-          {isLoading ? '保存中...' : '保存'}
-        </Button>
+        <div className='text-center text-xs text-gray-500'>
+          将来的にログイン認証機能を追加予定です
+        </div>
       </div>
     </div>
   )
