@@ -138,13 +138,9 @@ export default function UserAttendancePage() {
 
   const handleSave = async () => {
     if (todayRecord.clockIn && todayRecord.clockOut) {
-      const todayDate = new Date().toISOString().split('T')[0]
-      const startDateTime = `${todayDate}T${todayRecord.clockIn}:00`
-      const endDateTime = `${todayDate}T${todayRecord.clockOut}:00`
-
       const shiftData = {
-        StartTime: startDateTime,
-        EndTime: endDateTime,
+        StartTime: todayRecord.clockIn,
+        EndTime: todayRecord.clockOut,
         WorkContent: todayRecord.workContent,
         Issues: todayRecord.concerns,
       }
