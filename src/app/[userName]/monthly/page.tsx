@@ -1,25 +1,28 @@
 'use client'
 
-import { Label } from '../components/ui/label'
+import { Label } from '../../components/ui/label'
 
 import { useState, useEffect } from 'react'
-import { Button } from '../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Button } from '../../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../components/ui/select'
+} from '../../components/ui/select'
 import {
   ArrowLeft,
   Calendar,
   Clock,
   FileText,
   AlertTriangle,
+  User,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { useUserShifts } from '../../hooks/useShifts'
 
 interface AttendanceRecord {
   date: string
@@ -29,31 +32,57 @@ interface AttendanceRecord {
   concerns: string
 }
 
-export default function MonthlyReportPage() {
-  const [records, setRecords] = useState<AttendanceRecord[]>([])
+export default function UserMonthlyReportPage() {
+  const params = useParams()
+  const userName = params.userName as string
+  
   const [selectedMonth, setSelectedMonth] = useState('')
   const [filteredRecords, setFilteredRecords] = useState<AttendanceRecord[]>([])
 
-  useEffect(() => {
-    const savedRecords = localStorage.getItem('attendanceRecords')
-    if (savedRecords) {
-      const parsedRecords: AttendanceRecord[] = JSON.parse(savedRecords)
-      setRecords(parsedRecords)
+  // Use userName directly for API requests to /api/shifts/[userName]  
+  const { shifts, isLoading, error } = useUserShifts(userName)
 
-      // 現在の月を初期値に設定
-      const currentMonth = new Date().toISOString().slice(0, 7)
-      setSelectedMonth(currentMonth)
-    }
+  useEffect(() => {
+    // Set current month as default
+    const currentMonth = new Date().toISOString().slice(0, 7)
+    setSelectedMonth(currentMonth)
   }, [])
 
   useEffect(() => {
-    if (selectedMonth) {
-      const filtered = records.filter((record) =>
-        record.date.startsWith(selectedMonth)
-      )
-      setFilteredRecords(filtered.sort((a, b) => a.date.localeCompare(b.date)))
+    if (selectedMonth && shifts && Array.isArray(shifts)) {
+      // Convert database shifts (via API) to AttendanceRecord format and filter by month
+      const converted = shifts
+        .map((shift: any) => {
+          const startDate = new Date(shift.StartTime)
+          const endDate = new Date(shift.EndTime)
+          const dateString = startDate.toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          }).replace(/\//g, '-')
+
+          return {
+            date: dateString,
+            clockIn: startDate.toLocaleTimeString('ja-JP', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            clockOut: endDate.toLocaleTimeString('ja-JP', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            workContent: shift.WorkContent || '',
+            concerns: shift.Issues || '',
+          }
+        })
+        .filter((record: AttendanceRecord) => record.date.startsWith(selectedMonth))
+        .sort((a: AttendanceRecord, b: AttendanceRecord) => a.date.localeCompare(b.date))
+
+      setFilteredRecords(converted)
+    } else {
+      setFilteredRecords([])
     }
-  }, [selectedMonth, records])
+  }, [selectedMonth, shifts])
 
   const calculateWorkingHours = (
     clockIn: string | null,
@@ -85,7 +114,14 @@ export default function MonthlyReportPage() {
   }, 0)
 
   const getAvailableMonths = () => {
-    const months = new Set(records.map((record) => record.date.slice(0, 7)))
+    if (!shifts || !Array.isArray(shifts)) return []
+    
+    const months = new Set(
+      shifts.map((shift: any) => {
+        const date = new Date(shift.StartTime)
+        return date.toISOString().slice(0, 7)
+      })
+    )
     return Array.from(months).sort().reverse()
   }
 
@@ -98,23 +134,51 @@ export default function MonthlyReportPage() {
     })
   }
 
+  if (error) {
+    return (
+      <div className='min-h-screen bg-gray-50 p-4'>
+        <div className='max-w-4xl mx-auto space-y-6'>
+          <div className='text-center text-red-600'>
+            データの読み込みに失敗しました: {error.message}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className='min-h-screen bg-gray-50 p-4'>
       <div className='max-w-4xl mx-auto space-y-6'>
         <div className='flex justify-between items-center'>
           <div className='flex items-center gap-4'>
-            <Link href='/'>
+            <Link href={`/${userName}`}>
               <Button variant='outline' size='sm'>
                 <ArrowLeft className='w-4 h-4 mr-2' />
                 戻る
               </Button>
             </Link>
-            <h1 className='text-3xl font-bold text-gray-900 flex items-center gap-2'>
-              <Calendar className='w-8 h-8' />
-              月次レポート
-            </h1>
+            <div className='flex items-center gap-3'>
+              <User className='w-8 h-8 text-blue-600' />
+              <div>
+                <h1 className='text-3xl font-bold text-gray-900 flex items-center gap-2'>
+                  <Calendar className='w-8 h-8' />
+                  月次レポート
+                </h1>
+                <p className='text-sm text-gray-600'>{userName}さん</p>
+              </div>
+            </div>
           </div>
         </div>
+
+        {isLoading && (
+          <Card>
+            <CardContent className='pt-6'>
+              <div className='text-center text-gray-500'>
+                データを読み込み中...
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 月選択 */}
         <Card>
@@ -142,7 +206,7 @@ export default function MonthlyReportPage() {
           </CardContent>
         </Card>
 
-        {selectedMonth && (
+        {selectedMonth && !isLoading && (
           <>
             {/* 月次サマリー */}
             <Card>
@@ -262,7 +326,7 @@ export default function MonthlyReportPage() {
               ))}
             </div>
 
-            {filteredRecords.length === 0 && (
+            {filteredRecords.length === 0 && !isLoading && (
               <Card>
                 <CardContent className='pt-6'>
                   <div className='text-center text-gray-500'>
