@@ -2,7 +2,7 @@ const BASE_URL = '/api/shifts'
 import { safeReadErrorMessage } from '../../lib/utils'
 
 export type CreateShiftRequest = {
-  UserID: number
+  UserName: string
   StartTime: string
   EndTime: string
   WorkContent: string
@@ -27,9 +27,11 @@ export async function fetchShifts(): Promise<unknown> {
 }
 
 export async function createShift(
-  shiftData: CreateShiftRequest
+  shiftData: CreateShiftRequest,
+  { params }: { params: { userName: string } }
 ): Promise<unknown> {
-  const response = await fetch(`${BASE_URL}`, {
+  const { userName } = params
+  const response = await fetch(`${BASE_URL}/${userName}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
